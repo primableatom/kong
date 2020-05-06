@@ -445,6 +445,35 @@ describe("Configuration loader", function()
     end)
   end)
 
+  describe("port_map and host_ports", function()
+    it("are empty tables when not specified", function()
+      local conf = assert(conf_loader(helpers.test_conf_path, {}))
+      assert.same({}, conf.port_map)
+      assert.same({}, conf.host_ports)
+    end)
+    it("are tables when specified", function()
+      local conf = assert(conf_loader(helpers.test_conf_path, {
+        port_map = "80:8000,443:8443",
+      }))
+      assert.same({
+        "80:8000",
+        "443:8443",
+      }, conf.port_map)
+      assert.same({
+        [8000]   = 80,
+        ["8000"] = 80,
+        [8443]   = 443,
+        ["8443"] = 443,
+      }, conf.host_ports)
+    end)
+    it("gives an error with invalid value", function()
+      local _, err = conf_loader(helpers.test_conf_path, {
+        port_map = "src:dst",
+      })
+      assert.equal("invalid port mapping (`port_map`): src:dst", err)
+    end)
+  end)
+
   describe("inferences", function()
     it("infer booleans (on/off/true/false strings)", function()
       local conf = assert(conf_loader())
